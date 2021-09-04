@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.model_selection import train_test_split
 
+# toy dataset
 x = np.array([[0], [0.1], [0.2], [0.3], [0.4], [0.5], [0.6], [0.7], [0.8], [0.9], [1]])
 y = np.array([[0], [0.1], [0.2], [0.3], [0.7], [1], [0.7], [0.3], [0.2], [0.1], [0]])
 
@@ -52,6 +53,7 @@ class ffnn():
                         neuron.value = max(0, neuron.value)
                     elif self.activ_func == 'softplus':
                         neuron.value = np.log(1+np.exp(neuron.value))
+
             # apply softmax function to last layer for classification
             if self.task == 'classification':
                 for neuron in range(len(layers[-1].nodes)): # cycle through output nodes
@@ -104,8 +106,8 @@ class ffnn():
             layers.append(layer(len(layers),[]))
             for i in range(len(np.unique(y))): # one node for every unique y value (each category)
                 layers[-1].nodes.append(node(np.ones(self.h_layers[-1])))
-        else:
-            layers.append(layer(len(layers), list([node(np.ones(self.h_layers[-1]))]))) # for regression and prob estimation, we only need one output node
+        elif self.task == 'regression':
+            layers.append(layer(len(layers), list([node(np.ones(self.h_layers[-1]))]))) # for regression, we only need one output node
 
         # fill in the child nodes for every node
         for i in range(len(layers)-1): # cycle through all layers but the output layer
@@ -131,7 +133,7 @@ class ffnn():
         global node
 
         iteration = 0 # counter for the iterations
-        learning_rate = self.learning_rate
+        learning_rate = self.learning_rate # get learning rate from the class attributes
 
         # concatenate x and y together to randomly sample from it later
         mini_batch = np.concatenate((x,y),1)
@@ -161,9 +163,8 @@ class ffnn():
                             elif self.activ_func == 'softplus':
                                 layers[-layer].nodes[neuron].derivative = (layers[-layer].nodes[neuron].child_nodes[child].derivative * layers[-layer].nodes[neuron].child_nodes[child].w[neuron] * np.exp(layers[-layer].nodes[neuron].child_nodes[child].value))/(1+np.exp(layers[-layer].nodes[neuron].child_nodes[child].value))
 
-                # to get the partial derivative of a weight parameter, multiply the
-                # derivative of the current node with the value of the parent node
-                for layer in range(1,len(layers)): # cycle from last to second layer (the first doesn't have parameters)
+                # get the partial derivatives of parameters based on partial derivatives of nodes
+                for layer in range(1,len(layers)): # cycle from last to second layer (input layer doesn't have parameters)
                     for neuron in range(len(layers[-layer].nodes)): # cycle through nodes per layer
                         if self.activ_func == 'relu':
                             if layers[-layer].nodes[neuron].value >= 0: # if statement because of ReLU activation function
