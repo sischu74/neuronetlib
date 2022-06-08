@@ -6,6 +6,8 @@ I wrote the constructor from scratch, using only built-in python functions and N
 
 For classification, the network uses the softmax function before the output layer and optimizes using the cross-entropy loss function.
 
+The constructor is demoed on the MNIST dataset, where it achieved 89.2% accuracy after a few minutes of training. The Jupyter Notebook file can be found in the main branch.
+
 ### 2. How to access the constructor
 #### 2.1 Create an instance of the class and pass the necessary arguments
 To access the constructor, one has to define a variable, which is then an instance of the class 'ffnn':
