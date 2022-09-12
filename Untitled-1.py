@@ -1,4 +1,3 @@
-# %%
 from email.mime import image
 import numpy as np
 import scipy.signal
@@ -6,7 +5,6 @@ import skimage
 import math
 from sklearn.model_selection import train_test_split
 
-# %%
 import gzip
 import sys
 import os
@@ -19,7 +17,6 @@ if sys.version_info[0] == 2:
 else:
     from urllib.request import urlretrieve
 
-# %%
 def download(filename, source='http://yann.lecun.com/exdb/mnist/'):
     print("Downloading %s" % filename)
     urlretrieve(source + filename, filename)
@@ -43,18 +40,14 @@ def load_mnist_labels(filename):
         #    data2[i][ data[i] ] = 1.0
     return data
 
-# %%
 train_data = load_mnist_images('train-images-idx3-ubyte.gz')
 train_labels = load_mnist_labels('train-labels-idx1-ubyte.gz')
 
-# %%
 train_data = train_data[:2000]
 train_labels = train_labels[:2000]
 
-# %%
 train_data = train_data.reshape((60000, 28, 28))
 
-# %%
 class ConvLayer(): # convolutional layer
     def __init__(self, gridSize = (3,3), filterCount = 1):
         '''
@@ -102,7 +95,6 @@ class ConvLayer(): # convolutional layer
                 self.stencil -= arr[i,j] * self.derivatives[i,j] * eta
         self.b -= self.derivatives * eta      
 
-# %%
 class PoolLayer(): # pooling layer
     def __init__(self, poolSize=3, stride=None):
         assert (type(poolSize) == int), "Invalid argument for pool size. Please give an integer."
@@ -167,7 +159,6 @@ class PoolLayer(): # pooling layer
     def adjustParams(self, prevLayerVals, eta):
         return
 
- # %%
 lay = PoolLayer(2)
 lay.construct((2,12,12))
 arr = np.array([[[1,1,1],[0,0,0],[-1,-1,-1]], [[1,1,1],[0,0,0],[-1,-1,-1]]])
@@ -176,13 +167,11 @@ lay.derivatives
 
 
 
-# %%
 lay = PoolLayer("max", 2, 2)
 arr = np.arange(12).reshape(3,4)
 lay.compute(arr)
 lay.getPosition()
 
-# %%
 class DenseLayer(): # layer class
     def __init__(self, size, layerType="hidden"):
         self.w = None # w matrix (j'th row stores a row vector of weights of j'th neuron)
@@ -219,7 +208,6 @@ class DenseLayer(): # layer class
         self.w -= np.dot(np.reshape(self.derivatives, (self.size, 1)), np.reshape(valPrevLayer.T, (1,valPrevLayer.size)))*eta
         
 
-# %%
 class FFNN(): # neural network class
     def __init__(self, learning_rate = 0.1, batch_size = 0.1, targetAccuracy = 0.9):
         self.learning_rate = learning_rate
@@ -322,17 +310,14 @@ class FFNN(): # neural network class
             if (preds[i] != int(y[i])): errors += 1
         return 1 - errors/y.size
 
-# %%
 trainX, testX, trainY, testY = train_test_split(train_data, train_labels, test_size = 0.3)
 
-# %%
 mynn = FFNN(batch_size = 0.1, learning_rate = 0.04)
 mynn.addLayer(DenseLayer(80, "hidden"))
 mynn.addLayer(DenseLayer(50, "hidden"))
 mynn.train(trainX, trainY.reshape(trainY.shape[0], 1))
 mynn.predict(testX, testY)
 
-# %%
 class CNN(): # convolutional neural network class
     def __init__(self, learning_rate = 0.1, batchSize = 0.1, targetAccuracy = 0.9):
         self.layers = []
@@ -411,25 +396,20 @@ class CNN(): # convolutional neural network class
             
         return self.ffnn.predict(newInput, y)
 
-#%%
 net = CNN(targetAccuracy=0.8)
 net.addLayer(ConvLayer(filterCount=2))
 net.addLayer(PoolLayer())
 net.train(trainX, trainY)
 net.predict(testX, testY)
 
-#%%
 lay = ConvLayer((2,2), 1)
 arr = np.arange(16).reshape(4,4)
 filt = np.ones((2,2))
 scipy.signal.correlate(arr, filt, mode = "same")
-# %%
 lay = PoolLayer()
 arr = np.arange(25).reshape(5,5)
 lay.construct((5,5))
 lay.compute(arr)
 posers = lay.pos
 
-# %%
 np.multiply(posers, np.arange(25).reshape(5,5))
-# %%
