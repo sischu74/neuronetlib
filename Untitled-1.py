@@ -9,7 +9,6 @@ import gzip
 import sys
 import os
 import copy
-import numpy as np
 import pickle
 
 if sys.version_info[0] == 2:

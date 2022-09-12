@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import numpy as np
-from conv_layer import Conv_layer
-from pool_layer import Pool_layer
+from dense_layer import Dense_layer
 
 class CNN(): # convolutional neural network class
     def __init__(self, learning_rate = 0.1, batchSize = 0.1, targetAccuracy = 0.9):
@@ -13,7 +12,7 @@ class CNN(): # convolutional neural network class
     def addLayer(self, layer):
         self.layers.append(layer)
 
-    def __construct(self, x, k):
+    def __construct(self, x, k: int) -> None:
         # x is a sample input (used for input size), k is number of output classes
         self.layers.append(Dense_layer(k, "output")) # add output layer
         self.layers = np.array(self.layers)
@@ -22,15 +21,15 @@ class CNN(): # convolutional neural network class
         assert (type(self.layers[0]) != Dense_layer), "First layer cannot be dense."
         self.layers[0].construct(x.shape)
 
-        for l in range(1, self.layers):
+        for l in range(1, len(self.layers)):
             if (self.layers[l].layerType == "hidden"):
                 self.layers[l].construct(np.random.rand(self.layers[l].size, self.layers[l-1].outputSize[0]*self.layers[l-1].outputSize[1])-0.5, np.random.rand(self.layers[l].size)-0.5)
             else:
                 self.layers[l].construct(self.layers[l-1].outputDim)
 
-    def train(self, x, y):
+    def train(self, x: np.ndarray, y: np.ndarray) -> None:
         inputDim = x[0].shape
-        self.__construct(x[0], np.unique(y))
+        self.__construct(x[0], np.unique(y).size)
         iters = 0
 
         data = np.reshape(x, (x[0].size,1)) # flatten array

@@ -2,6 +2,7 @@
 import numpy as np
 
 class Dense_layer(): # layer class
+
     def __init__(self, size, layerType="hidden"):
         self.w = None # w matrix (j'th row stores a row vector of weights of j'th neuron)
         self.b = None # b vector (b[j] is the bias term of the j'th neuron in this layer)
