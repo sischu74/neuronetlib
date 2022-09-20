@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import init
 from cnn import CNN
-from dense_layer import Dense_layer
 from conv_layer import Conv_layer
 from pool_layer import Pool_layer
 from sklearn.model_selection import train_test_split

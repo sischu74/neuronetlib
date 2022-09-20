@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
 import numpy as np
+from layer import Layer
 
-class Dense_layer(): # layer class
 
-    def __init__(self, size, layerType="hidden"):
+class Dense_layer(Layer):
+    """
+    Dense Layer class implements abstract Layer class. Simple propagating layer.
+    """
+
+    def __init__(self, size: int, layer_type: str = "hidden"):
         self.w = None # w matrix (j'th row stores a row vector of weights of j'th neuron)
         self.b = None # b vector (b[j] is the bias term of the j'th neuron in this layer)
         self.size = size # number of neurons in this layer
+        self.layer_type = layer_type # output or hidden
         self.values = None # vector of values
         self.derivatives = None # vector of derivatives
-        self.layerType = layerType # hidden, input or output
         self.outputDim = None # dimension of output
 
     def construct(self, w, b, inputDim = None): # initialize random w and b vectors
@@ -33,6 +38,12 @@ class Dense_layer(): # layer class
 
     def differentiateDense(self, wNextLayer, nextLayerDerivative): # needs to be called with derivative and w of next layer
         self.derivatives = np.dot(wNextLayer.T, nextLayerDerivative)
+
+    def differentiateConv(self, nextLayerDerivative, nextLayerStencil):
+        raise Exception("Not supported: Convolutional layer after dense layer")
+
+    def differentiatePool(self, positions):
+        raise Exception("Not supported: Pooling layer after dense layer")
 
     def adjustParams(self, valPrevLayer, eta):
         self.b -= np.reshape(self.derivatives, (self.size,)) * eta

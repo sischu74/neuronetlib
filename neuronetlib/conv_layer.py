@@ -2,8 +2,10 @@
 import numpy as np
 import scipy.signal
 import skimage
+from layer import Layer
 
-class Conv_layer(): # convolutional layer
+
+class Conv_layer(Layer): # convolutional layer
 
     def __init__(self, grid_size = (3,3), filterCount = 1):
         '''
@@ -15,7 +17,6 @@ class Conv_layer(): # convolutional layer
         self.values = None
         self.grid_size = grid_size
         self.filterCount = filterCount
-        self.layerType = "conv"
         self.stencil = np.random.rand(filterCount, grid_size[0], grid_size[1]) - 0.5 # initialize stencil to random values
         self.oldStencil = None
         self.derivatives = None

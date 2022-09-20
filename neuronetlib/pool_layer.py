@@ -1,26 +1,31 @@
 #!/usr/bin/env python3
 import numpy as np
 import math
+import scipy.signal
+from layer import Layer
 
-class Pool_layer(): # pooling layer
 
-    def __init__(self, poolSize=3, stride=None):
-        assert (type(poolSize) == int), "Invalid argument for pool size. Please give an integer."
-        self.poolSize = poolSize
+class Pool_layer(Layer):
+    """
+    Pooling Layer implements abstract Layer class. Used for constructing CNNs.
+    """
+
+    def __init__(self, pool_size: int = 3, stride: int = None):
+        self.pool_size = pool_size
         self.values = None
-        self.pos = None # position of the max value per square
-        self.layerType = "pool"
+        self.pos = None  # position of the max value per square
         self.outputDim = None
-        if (stride == None): self.stride = poolSize
+        if (stride == None): self.stride = pool_size
         else: self.stride = stride
 
-    def construct(self, inputDim): # set output dimension
-        self.outputDim = (inputDim[0], math.ceil((inputDim[1]-self.poolSize)/self.stride) + 1, math.ceil((inputDim[2]-self.poolSize)/self.stride) + 1)
+    def construct(self, inputDim: tuple) -> None:
+        """Set output dimension."""
+        self.outputDim = (inputDim[0], math.ceil((inputDim[1]-self.pool_size)/self.stride) + 1, math.ceil((inputDim[2]-self.pool_size)/self.stride) + 1)
         self.pos = np.empty(inputDim)
 
     def compute(self, data):
-        f = self.poolSize
-        a,m,n = data.shape
+        f = self.pool_size
+        a, m, n = data.shape
 
         for i in range(a):
             # pad the matrix if not evenly divisible by kernel size
@@ -35,7 +40,7 @@ class Pool_layer(): # pooling layer
             result = np.squeeze(result)
             self.values = result
             self.values[self.values < 0] = 0 # apply ReLU
-            self.pos[i] = np.reshape(pos.flatten("K"), (self.outputDim[1]*self.poolSize, self.outputDim[2]*self.poolSize))[:data.shape[1], :data.shape[2]]
+            self.pos[i] = np.reshape(pos.flatten("K"), (self.outputDim[1]*self.pool_size, self.outputDim[2]*self.pool_size))[:data.shape[1], :data.shape[2]]
 
     def __asStride(self, arr, sub_shape, stride):
         '''Get a strided sub-matrices view of an ndarray.
@@ -62,7 +67,12 @@ class Pool_layer(): # pooling layer
     def differentiateConv(self, nextLayerDerivative, nextLayerStencil):
         self.derivatives = np.empty(self.outputDim)
         for i in range(self.outputDim[0]):
-            self.derivatives[i] = scipy.signal.correlate(nextLayerDerivative[i], np.flip(np.flip(nextLayerStencil[i], 0), 1), mode = "full")
+            self.derivatives[i] = scipy.signal.correlate(nextLayerDerivative[i],
+                np.flip(np.flip(nextLayerStencil[i], 0), 1), mode="full")
+
+    def differentiatePool(self, positions):
+        raise Exception("Not supported: Pooling layer after pooling layer")
 
     def adjustParams(self, prevLayerVals, eta):
-        return
+        """No parameters to adjust. Pooling layers are just for compression."""
+        pass
