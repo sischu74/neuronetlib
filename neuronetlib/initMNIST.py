@@ -10,7 +10,7 @@ else:
     from urllib.request import urlretrieve
 
 
-def initalize() -> np.array:
+def load() -> np.array:
     train_data = load_mnist_images('train-images-idx3-ubyte.gz')
     train_labels = load_mnist_labels('train-labels-idx1-ubyte.gz')
     return train_data, train_labels
