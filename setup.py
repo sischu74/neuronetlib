@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages, Extension
-# from distutils.core import setup, Extension
 
 from Cython.Build import cythonize
 import numpy as np
@@ -18,14 +17,14 @@ setup(
     name="neuronetlib",
     version="0.0.1",
     author="Sascha Kehrli",
-    author_email="skehrli@student.ethz.ch",
+    author_email="skehrli@ethz.ch",
     description="Neural network library",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/skehrli/neuronetlib",
     packages=find_packages(),
     classifiers=[
-        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 2",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
