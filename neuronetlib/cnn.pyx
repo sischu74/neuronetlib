@@ -1,14 +1,11 @@
 # distutils: language = c++
+#cython language_level=3
 cimport numpy as np
 import numpy as np
 from layer cimport layer
 from dense_layer cimport dense_layer
 from conv_layer cimport conv_layer
 from pool_layer cimport pool_layer
-# from layer import layer
-# from dense_layer import dense_layer
-# from conv_layer import conv_layer
-# from pool_layer import pool_layer
 
 cdef class CNN(): # convolutional neural network class
     cdef list Layers
@@ -36,59 +33,46 @@ cdef class CNN(): # convolutional neural network class
         self.Layers.append(dense_layer(k, 'output')) # add output layer
         self.layers = np.asarray(self.Layers)
 
-        # if isinstance(self.layers[0], dense_layer):
-        #     curr_layer = self.layers[0]
-        #     curr_layer.construct(np.random.rand(self.layers[0].size, x.size)-0.5,
-        #                              np.random.rand(self.layers[0].size)-0.5)
-        # else:
         curr_layer = self.layers[0]
         curr_layer.construct((1, x.shape[0], x.shape[1]))
 
-        # cdef bint first = True # indicates if current layer is the first dense hidden layer
         cdef int l
-        # cdef tuple predDim
         for l in range(1, len(self.layers)):
-            # if isinstance(self.layers[l], dense_layer):
-            #     if first and isinstance(self.layers[l-1], dense_layer):
-            #         first = False
-            #         predDim = self.layers[l-1].outputDim # dimensions of last non-dense layer
-            #         self.layers[l].construct(predDim)
-            #     else:
-            #         # assert(isinstance(self.layers[l-1], dense_layer)), 'Layer after dense layer must be dense too.'
-            #         self.layers[l].construct(predDim)
-            # else:
             curr_layer = self.layers[l]
             prev_layer = self.layers[l-1]
             curr_layer.construct(prev_layer.output_dim)
 
 
     def train(self, x: np.ndarray, y: np.ndarray) -> None:
-        self.ctrain(x, y)
+        samples = x.shape[0]
+        self.ctrain(x, y, samples)
 
-    cdef void ctrain(self, np.ndarray x, np.ndarray y):
+    cdef void ctrain(self, np.ndarray x, np.ndarray y, int nr_samples):
         cdef np.ndarray data
         cdef np.ndarray index
         cdef np.ndarray batch
         cdef np.ndarray point
         cdef int label, sample, batchSize, i, iters = 0
-        cdef layer curr_layer
+        cdef layer curr_layer, prev_layer
+        cdef dense_layer curr_dense
+        cdef conv_layer curr_conv
+        cdef pool_layer curr_pool
 
         self.__construct(x[0], len(np.unique(y)))
 
-        data = np.reshape(x, (x.shape[0], x[0].size)) # flatten array
+        data = np.reshape(x, (nr_samples, x[0].size)) # flatten array
         data = np.concatenate((data, y.reshape(y.size,1)), 1) # merge x and y data such that the data/labels correspond
-        batchSize = int(self.batch_size * x.shape[0])
+        batchSize = int(self.batch_size * nr_samples)
 
-        # for i in range(5):
-        while not self.__earlyStopping(data, iters):
+        while not self.__earlyStopping(data, iters, nr_samples):
             # randomly select batch to train on
-            index = np.random.randint(x.shape[0], size=batchSize) # create random index set to sample
+            index = np.random.randint(nr_samples, size=batchSize) # create random index set to sample
             batch = data[index, :]  # create random sample from the data
 
             for sample in range(batchSize): # iterate through all samples in the batch
                 point = batch[sample, :-1]
                 label = batch[sample, -1]
-                self.__forwardPass(np.reshape(point, self.inputDim), label) # call internal prediction method
+                self.__forwardPass(np.reshape(point, self.inputDim)) # call internal prediction method
 
                 # compute derivative with respect to nodes in last layer
                 curr_layer = self.layers[-1]
@@ -101,15 +85,18 @@ cdef class CNN(): # convolutional neural network class
                     curr_layer = self.layers[i+1]
                     prev_layer = self.layers[i]
                     if isinstance(curr_layer, dense_layer):
+                        curr_dense = curr_layer
                         prev_layer.differentiateDense(
-                            curr_layer.w, curr_layer.derivatives.reshape(
-                                curr_layer.size, 1))
+                            curr_dense.w, curr_dense.derivatives.reshape(
+                                curr_dense.size, 1))
                     elif isinstance(curr_layer, pool_layer):
+                        curr_pool = curr_layer
                         prev_layer.differentiatePool(
-                            curr_layer.fullDerMat, curr_layer.pos)
+                            curr_pool.fullDerMat, curr_pool.pos)
                     elif isinstance(curr_layer, conv_layer):
+                        curr_conv = curr_layer
                         prev_layer.differentiateConv(
-                            curr_layer.derivatives, curr_layer.oldStencil)
+                            curr_conv.derivatives, curr_conv.oldStencil)
 
                     if i == 0:
                         prev_layer.adjustParams(
@@ -129,7 +116,7 @@ cdef class CNN(): # convolutional neural network class
         vect[x] = 1
         return vect
 
-    cdef int __forwardPass(self, np.ndarray x, int y):
+    cdef int __forwardPass(self, np.ndarray x):
         cdef int i
         cdef layer curr_layer = self.layers[0]
         cdef layer prev_layer
@@ -141,43 +128,41 @@ cdef class CNN(): # convolutional neural network class
         curr_layer = self.layers[-1]
         return np.argmax(curr_layer.values) # predict the maximum value in the output layer
 
-    cdef bint __earlyStopping(self, np.ndarray data, int iteration): # decides when to stop the training
+    cdef bint __earlyStopping(self, np.ndarray data, int iteration, int nr_samples): # decides when to stop the training
         cdef np.ndarray index
         cdef np.ndarray sample
         cdef np.ndarray predictions
         cdef double accuracy
-        if (iteration % 10 != 0): return False
+        if iteration % 10 != 0:
+            return False
         if iteration == 0: # if it's the first iterati skip everything here right away
             return False
-        else: # check only every 10'th iteration
-            index = np.random.randint(data.shape[0], size = int(data.shape[0]*0.2)) # create random index set to sample
-            sample = data[index,:] # create random sample from the data
-            predictions = self.predict(
-                np.reshape(sample[:, :-1],
-                           (sample.shape[0], self.inputDim[1], self.inputDim[2])),
-                sample[:, -1])  # predict on the sample
-            accuracy = self.__accuracy(predictions, sample[:, -1])
-            print(f'current accuracy: {accuracy}')
-            # if accuracy achieved target accuracy, stop training
-            if (accuracy >= self.targetAccuracy):
-                return True
-            return False
+        index = np.random.randint(nr_samples, size = int(nr_samples*0.2)) # create random index set to sample
+        sample = data[index,:] # create random sample from the data
+        predictions = self.predict(
+            np.reshape(sample[:, :-1],
+                        (sample.shape[0], self.inputDim[1], self.inputDim[2])),
+            int(0.2*nr_samples))  # predict on the sample
+        accuracy = self.__accuracy(predictions, sample[:, -1])
+        print(f'current accuracy: {accuracy}')
+        # if accuracy achieved target accuracy, stop training
+        if (accuracy >= self.targetAccuracy):
+            return True
+        return False
 
     cdef double __accuracy(self, np.ndarray preds, np.ndarray y):
-        cdef int errors
+        cdef double errors = 0
         cdef int i
         if (y.size == 0):
             raise Exception('empty sample')
-        errors = 0
         for i in range(y.size):
             if (int(preds[i]) != int(y[i])):
                 errors += 1
         return 1 - errors/len(y)
 
-    cdef np.ndarray predict(self, np.ndarray x, np.ndarray y): # public prediction method
-        cdef np.ndarray preds
+    cdef np.ndarray predict(self, np.ndarray x, int batch_size): # public prediction method
+        cdef np.ndarray preds = np.empty(batch_size, int)
         cdef int i
-        preds = np.empty(x.shape[0], int)
-        for i in range(x.shape[0]):
-            preds[i] = self.__forwardPass(np.reshape(x[i], self.inputDim), y[i])
+        for i in range(batch_size):
+            preds[i] = self.__forwardPass(np.reshape(x[i], self.inputDim))
         return preds

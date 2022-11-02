@@ -11,9 +11,11 @@ if __name__ == "__main__":
     trainX, testX, trainY, testY = train_test_split(train_data, train_labels,
                                                     test_size=0.3)
 
-    cnn = neuronetlib.cnn.CNN(batch_size=0.05, targetAccuracy=0.92)
+    cnn = neuronetlib.cnn.CNN(batch_size=0.05, targetAccuracy=0.91)
     cnn.addLayer(neuronetlib.conv_layer.conv_layer(filter_count=4))
     cnn.addLayer(neuronetlib.pool_layer.pool_layer())
     cnn.addLayer(neuronetlib.conv_layer.conv_layer(filter_count=2))
-    cnn.train(trainX, trainY)
-    # cnn.predict(x, y)
+    cnn.addLayer(neuronetlib.pool_layer.pool_layer())
+    # cnn.addLayer(neuronetlib.dense_layer.dense_layer(200))
+    cnn.train(trainX[:5000], trainY[:5000])
+    cnn.predict(x, y)

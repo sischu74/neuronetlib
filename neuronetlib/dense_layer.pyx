@@ -2,8 +2,6 @@
 import numpy as np
 cimport numpy as np
 from layer cimport layer
-from layer import layer
-
 
 cdef class dense_layer(layer): # layer class
     def __init__(self, int size, str layerType='hidden'):
@@ -20,7 +18,7 @@ cdef class dense_layer(layer): # layer class
                                 inputDim[0]*inputDim[1]*inputDim[2]) - 0.5
         self.b = np.random.rand(self.size) - 0.5
 
-        self.output_dim = (self.size, 1)
+        self.output_dim = (self.size, 1, 1)
 
     cdef np.ndarray __softmax(self, np.ndarray x):
         cdef double maxi

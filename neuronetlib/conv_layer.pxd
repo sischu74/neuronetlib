@@ -1,7 +1,6 @@
 cimport numpy as np
 import numpy as np
 from layer cimport layer
-from layer import layer
 
 cdef class conv_layer(layer): # convolutional layer
     cdef tuple grid_size
