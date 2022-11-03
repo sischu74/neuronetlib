@@ -1,49 +1,40 @@
-## Feedforward neural network library from scratch
-### 1. Introduction and motivation
-In order to fully understand how artificial neural networks are trained, I wanted to write a constructor for feedforward neural networks, which creates a neural net only by having specified a list of the desired hidden layers and some custom parameters, like learning rate and batch size for gradient descent.
+## Deep Learning Library from Scratch
+In order to fully understand how artificial neural networks are trained, I wanted to write a Python libray for neural networks from scratch, that is, using only NumPy. Over the course of writing the libray, I started studying CS and rewrote the source code multiple times, adding new features like CNNs and in the most recent iteration rewriting everything in Cython.
 
-I wrote the constructor from scratch, using only built-in python functions and NumPy. The training was optimized to make great use of vectorization and especially the highly optimized NumPy matrix multiplication. The constructor class stores a list of layers, which are their own class and store a weight matrix and various vectors for derivatives, intercepts and values each.
+The library will be expanded in the future to accomodate more features and improve numerical stability, which is not great at the moment. For too many layers and nodes, overflows occur quickly. Recommended for CNNs is one convolutional and one pooling layer. A dense layer is inserted automatically as the output layer.
 
-For classification, the network uses the softmax function before the output layer and optimizes using the cross-entropy loss function.
+The point of the library is for people interested in the lower-level workings of deep learning and libraries in particular to take a look at concise source code and get an idea of how things can be implemented efficiently.
 
-The constructor is demoed on the MNIST dataset, where it achieved 89.2% accuracy after a few minutes of training. The Jupyter Notebook file can be found in the main branch.
-
-### 2. How to access the constructor
-#### 2.1 Create an instance of the class and pass the necessary arguments
-To access the constructor, one has to define a variable, which is then an instance of the class 'ffnn':
+## Using neuronetlib
 ```Python
-model = ffnn([100,70]) # call the constructor and set the parameters. In this case two hidden layers with 100 and 70 nodes each.
+# install neuronetlib. Recommended to run in the terminal, since Jupyter Notebooks have difficulties with pip installing libraries.
+pip install neuronetlib
 ```
 
-The arguments in brackets are:
 
-1. List of the hidden layers (for example [20,20] for two hidden layers with 20 neurons each)
-2. Learning rate (step size for the adjustments in parameter learning. default is 0.04)
-3. Batch size (how much of the dataset is used for mini-batch gradient descent)
-4. Target Accuracy (constructor will stop training once this accuracy and sufficient convergence is achieved)
-Below are all the possible arguments:
-
+Import cnn and layer packages.
 ```Python
-model = ffnn(h_layers = [100,70], learning_rate = 0.05, batch_size = 0.1, targetAccuracy = 0.92)
-```
+import neuronetlib as nnl
+from neuronetlib import cnn
+from neuronetlib import conv_layer
+from neuronetlib import pool_layer
+from neuronetlib import dense_layer
 
-#### 2.2 Construct the network
-The model is now stored in a variable. In our case, the variable is called 'model'. We can now call the construct method on our model, which builds the specified layers and nodes. We need to specify both the x and y part of the dataset, so that the model knows how large the input and output layer need to be.
+# initialize network
+network = nnl.cnn.CNN(learning_rate=0.08, batch_size=0.05, targetAccuracy=0.91)
 
-```Pyrhon
-model.construct(x,y) # construct the network with the dataset (needs it for shape of input and output layer)
-```
+# add a convolutional layer with 4 filters
+cnn.addLayer(neuronetlib.conv_layer.conv_layer(grid_size=(3,3), filter_count=4))
 
-#### 2.3 Train the model
-Now we can call the train method on our model to learn the parameters. The necessary arguments for this method are the whole dataset (x and y). Make sure that the dimensions of the y vector is n * 1 (if the numpy array has shape (n,) instead of (n,1) you need to reshape it).
+# add a pooling layer
+cnn.addLayer(neuronetlib.pool_layer.pool_layer(pool_size=2, stride=0))
 
-```Python
-model.train(x,y) # train the network with training data
-```
+# add a dense layer
+cnn.addLayer(neuronetlib.dense_layer.dense_layer(size=50, layerType='hidden'))
 
-#### 2.4 predict on the test dataset
-We now possess a trained model and can use it to make predictions on the test set with the 'predict' method. This will return an array with the predictions as well as the accuracy of the model on the training data.
+# train network on hypothetical training data
+cnn.train(trainX, trainY)
 
-```Python
-model.predict(x,y) # predict on the test data with the trained model
+# predict on hypothetical test data
+cnn.predict(testX, testY)
 ```
