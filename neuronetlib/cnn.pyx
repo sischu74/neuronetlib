@@ -139,7 +139,7 @@ cdef class CNN(): # convolutional neural network class
             return False
         index = np.random.randint(nr_samples, size = int(nr_samples*0.2)) # create random index set to sample
         sample = data[index,:] # create random sample from the data
-        predictions = self.predict(
+        predictions = self.cpredict(
             np.reshape(sample[:, :-1],
                         (sample.shape[0], self.inputDim[1], self.inputDim[2])),
             int(0.2*nr_samples))  # predict on the sample
@@ -160,7 +160,12 @@ cdef class CNN(): # convolutional neural network class
                 errors += 1
         return 1 - errors/len(y)
 
-    cdef np.ndarray predict(self, np.ndarray x, int batch_size): # public prediction method
+    def predict(self, x, y):
+        predictions = self.cpredict(x, x.shape[0])
+        accuracy = self.__accuracy(predictions, y)
+        return accuracy, predictions
+
+    cdef np.ndarray cpredict(self, np.ndarray x, int batch_size): # internal prediction method
         cdef np.ndarray preds = np.empty(batch_size, int)
         cdef int i
         for i in range(batch_size):
