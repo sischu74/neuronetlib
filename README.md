@@ -1,5 +1,5 @@
 ## Deep Learning Library from Scratch
-In order to fully understand how artificial neural networks are trained, I wanted to write a Python libray for neural networks from scratch, that is, using only NumPy. Over the course of writing the libray, I started studying CS and rewrote the source code multiple times, adding new features like CNNs and in the most recent iteration rewriting everything in Cython.
+In order to fully understand how artificial neural networks are trained, I wanted to write a Python library for neural networks from scratch, that is, using only NumPy. Over the course of writing the libray, I started studying CS and rewrote the source code multiple times, adding new features like CNNs and in the most recent iteration rewriting everything in Cython.
 
 The library will be expanded in the future to accomodate more features and improve numerical stability, which is not great at the moment. For too many layers and nodes, overflows occur quickly. Recommended for CNNs is one convolutional and one pooling layer. A dense layer is inserted automatically as the output layer.
 
